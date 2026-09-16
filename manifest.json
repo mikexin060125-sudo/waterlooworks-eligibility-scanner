@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "WaterlooWorks Eligibility Scanner",
+  "version": "0.1",
+  "description": "Checks WaterlooWorks job postings for citizenship and work authorization restrictions.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://waterlooworks.uwaterloo.ca/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
