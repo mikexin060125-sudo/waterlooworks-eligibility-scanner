@@ -458,118 +458,6 @@ function waitForModalToClose() {
    身份限制判断
 ================================ */
 
-function classifyEligibility(text) {
-
-  const lower =
-    text.toLowerCase();
-
-
-  const restricted = [
-
-    "canadian citizen",
-
-    "canadian citizenship",
-
-    "permanent resident",
-
-    "u.s. citizen",
-
-    "us citizen",
-
-    "citizens only",
-
-    "citizenship required",
-
-    "must be a citizen",
-
-    "must be canadian",
-
-    "controlled goods"
-
-  ];
-
-
-  const review = [
-
-    "security clearance",
-
-    "work authorization",
-
-    "authorized to work",
-
-    "legally entitled to work",
-
-    "eligible to work",
-
-    "without sponsorship",
-
-    "visa sponsorship",
-
-    "itar",
-
-    "export control"
-
-  ];
-
-
-  for (const word of restricted) {
-
-    if (lower.includes(word)) {
-
-      return {
-
-        type: "restricted",
-
-        label:
-          "🔴 Restricted",
-
-        reason:
-          word
-
-      };
-
-    }
-
-  }
-
-
-  for (const word of review) {
-
-    if (lower.includes(word)) {
-
-      return {
-
-        type: "review",
-
-        label:
-          "🟡 Review",
-
-        reason:
-          word
-
-      };
-
-    }
-
-  }
-
-
-  return {
-
-    type:
-      "clear",
-
-    label:
-      "🟢 Clear",
-
-    reason:
-      "No obvious restriction"
-
-  };
-
-}
-
-
 /* ================================
    把结果写回职位列表
 ================================ */
@@ -607,7 +495,7 @@ function addResultBadge(
 
 
   badge.title =
-    result.reason;
+    result.evidence ? `${result.reason} | Source: ${result.evidence}` : result.reason;
 
 
   /*
