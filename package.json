@@ -2,5 +2,10 @@
   "name": "waterlooworks-eligibility-scanner",
   "version": "0.2.0",
   "private": true,
-  "scripts": { "test": "node --test" }
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
 }
