@@ -132,6 +132,26 @@ async function scanAllJobs() {
         result
       );
 
+      // Save the scan result through the background service worker
+          try {
+            const response = await chrome.runtime.sendMessage({
+              action: "saveJob",
+              job: {
+                id: job.id,
+                title: job.title,
+                type: result.type,
+                reason: result.reason
+              }
+            });
+
+            if (!response?.success) {
+              console.warn("Job was not saved:", job.id, response?.error);
+            } else {
+              console.log("Job saved to PostgreSQL:", job.id);
+            }
+          } catch (error) {
+            console.warn("Database save failed:", job.id, error.message);
+          }
 
       if (result.type === "clear") {
         clear++;
