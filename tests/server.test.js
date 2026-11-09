@@ -38,10 +38,10 @@ test("API can save and retrieve a job", async () => {
 
     const getResponse = await fetch(`${base}/api/jobs`);
     assert.equal(getResponse.status, 200);
-
     const jobs = await getResponse.json();
-    assert.equal(jobs.length, 1);
-    assert.equal(jobs[0].type, "clear");
+    const savedJob = jobs.find(job => job.id === "495120");
+    assert.ok(savedJob, "Saved job should exist");
+    assert.equal(savedJob.eligibility_type, "clear");
   } finally {
     server.kill();
   }

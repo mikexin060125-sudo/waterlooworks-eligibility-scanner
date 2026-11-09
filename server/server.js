@@ -1,61 +1,72 @@
 
 const http = require("node:http");
+const pool = require("./database");
 
-const jobs = [];
-
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   res.setHeader("Content-Type", "application/json");
 
-  // GET: Retrieve all saved jobs
+  // GET: Read jobs from PostgreSQL
   if (req.method === "GET" && req.url === "/api/jobs") {
-    res.writeHead(200);
-    res.end(JSON.stringify(jobs));
+    try {
+      const result = await pool.query(
+        "SELECT * FROM jobs ORDER BY scanned_at DESC"
+      );
+
+      res.writeHead(200);
+      res.end(JSON.stringify(result.rows));
+    } catch (error) {
+      console.error(error);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: "Database error" }));
+    }
     return;
   }
 
-  // POST: Add a new job
+  // POST: Save a job to PostgreSQL
   if (req.method === "POST" && req.url === "/api/jobs") {
     let body = "";
 
-    req.on("data", chunk => {
+    for await (const chunk of req) {
       body += chunk;
-    });
+    }
 
-    req.on("end", () => {
-      try {
-        const job = JSON.parse(body);
+    try {
+      const job = JSON.parse(body);
 
-        if (!job.id || !job.title) {
-          res.writeHead(400);
-          res.end(JSON.stringify({
-            error: "Job ID and title are required"
-          }));
-          return;
-        }
-
-        jobs.push(job);
-
-        res.writeHead(201);
-        res.end(JSON.stringify({
-          message: "Job saved successfully",
-          job
-        }));
-      } catch {
+      if (!job.id || !job.title ||
+          !["clear", "review", "restricted"].includes(job.type)) {
         res.writeHead(400);
-        res.end(JSON.stringify({
-          error: "Invalid JSON"
-        }));
+        res.end(JSON.stringify({ error: "Invalid job data" }));
+        return;
       }
-    });
 
+      const result = await pool.query(
+        `INSERT INTO jobs (id, title, eligibility_type, reason)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title,
+           eligibility_type = EXCLUDED.eligibility_type,
+           reason = EXCLUDED.reason,
+           scanned_at = CURRENT_TIMESTAMP
+         RETURNING *`,
+        [job.id, job.title, job.type, job.reason || null]
+      );
+
+      res.writeHead(201);
+      res.end(JSON.stringify({
+        message: "Job saved successfully",
+        job: result.rows[0]
+      }));
+    } catch (error) {
+      console.error(error);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: "Could not save job" }));
+    }
     return;
   }
 
-  // Unknown route
   res.writeHead(404);
-  res.end(JSON.stringify({
-    error: "Route not found"
-  }));
+  res.end(JSON.stringify({ error: "Route not found" }));
 });
 
 server.listen(3000, "127.0.0.1", () => {
